@@ -182,9 +182,15 @@ registered through the repository API with explicit metadata and precision.
 src/forex_monitor/
   alerts/          rule evaluation and notification delivery
   analytics/       aggregation, indicators, risk, and signals
+  backtesting/     execution simulation and walk-forward evaluation
   ingestion/       provider-to-storage orchestration
+  observability/   health, metrics, diagnostics, and audit events
+  portfolio/       positions, valuation, allocation, and exposure
   providers/       HTTP, fixture, and payload normalization
+  quality/         consistency, continuity, and outlier checks
+  risk/            sizing, limits, scenarios, and tail-risk measures
   storage/         migrations, transactions, and repositories
+  strategies/      composable strategies, filters, and ensembles
   application.py   production dependency composition
   cli.py           command-line parsing and dispatch
   config.py        validated settings

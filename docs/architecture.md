@@ -141,6 +141,27 @@ The CLI initializes storage before data commands, translates arguments to typed 
 services, and serializes results. Network access occurs only for commands that explicitly fetch or
 check the live provider. Importing any package module is side-effect free.
 
+## Portfolio, risk, and strategies
+
+Portfolio values are immutable snapshots. Positions normalize symbols, mark against an explicit
+price mapping, and expose notional, unrealized profit, currency exposure, allocation, and
+concentration calculations. Risk services compose fixed-fractional sizing, exit prices, pre-trade
+limits, drawdowns, correlations, historical tail risk, and deterministic shock scenarios.
+
+Strategies implement one public protocol and return structured decisions. Trend, momentum,
+breakout, mean-reversion, and volatility implementations can be registered by name, filtered for
+session or liquidity constraints, and combined through a confidence-weighted ensemble.
+
+## Backtesting and operational quality
+
+The backtesting package keeps execution costs, orders, fills, ledger state, trade metrics,
+parameter grids, and walk-forward windows separate. This lets feature tasks change one public
+contract without depending on a reference implementation's private layout.
+
+Quality services audit quote order, spreads, candle completeness, continuity, and robust price
+outliers. Observability services expose bounded audit events, counters, gauges, health checks,
+runtime diagnostics, redaction, and injected-clock latency measurements.
+
 ## Extension points for feature tasks
 
 Good task-sized extensions include:
