@@ -178,14 +178,21 @@ class FxssiNormalizer:
             ask = _price(ask_value, f"payload row {index} ask")
             metadata["valueKind"] = "market_price"
         else:
-            long_value = _first(row, ("long", "longs", "buyRatio", "buyers", "buy"))
+            long_value = _first(
+                row,
+                ("long", "longs", "buyRatio", "buyers", "buy", "average"),
+            )
             short_value = _first(row, ("short", "shorts", "sellRatio", "sellers", "sell"))
-            if long_value is None or short_value is None:
+            if long_value is None:
                 raise ProviderResponseError(
                     f"payload row {index} must contain prices or sentiment ratios"
                 )
             long_ratio = _percentage(long_value, f"payload row {index} long ratio")
-            short_ratio = _percentage(short_value, f"payload row {index} short ratio")
+            short_ratio = (
+                _percentage(short_value, f"payload row {index} short ratio")
+                if short_value is not None
+                else Decimal("100") - long_ratio
+            )
             if abs((long_ratio + short_ratio) - Decimal("100")) > Decimal("1"):
                 raise ProviderResponseError(
                     f"payload row {index} sentiment ratios must total approximately 100"
@@ -272,4 +279,3 @@ class GenericQuoteNormalizer:
                 raise ProviderResponseError(f"quote row {index} is invalid") from exc
             seen.add(symbol)
         return tuple(result)
-
