@@ -1,41 +1,62 @@
-name: run main.py
+name: CI
 
-# on:
-#   workflow_dispatch
 on:
-  schedule:
-    - cron: '5 */1 * * *' # At 00:00 on Monday
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  test:
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.12"]
+
     steps:
+      - name: Check out source
+        uses: actions/checkout@v4
 
-      - name: checkout repo content
-        uses: actions/checkout@v2 # checkout the repository content to github runner
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
 
-      - name: setup python
-        uses: actions/setup-python@v4
+      - name: Install package and development tools
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[dev]'
+
+      - name: Compile package
+        run: python -m compileall -q src tests main.py
+
+      - name: Check formatting
+        run: ruff format --check src tests
+
+      - name: Run lint rules
+        run: ruff check src tests
+
+      - name: Run type analysis
+        run: mypy
+
+      - name: Run tests with branch coverage
+        run: pytest --cov=forex_monitor --cov-report=term-missing
+
+      - name: Build source and wheel distributions
+        run: python -m build
+
+      - name: Upload package distributions
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
         with:
-          python-version: '3.9.16' # install the python version needed
-          
-      - name: install python packages
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          
-      - name: execute py script # run main.py
-        run: python main.py
-          
-      - name: commit files
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -A
-          git diff-index --quiet HEAD || (git commit -a -m "updated logs" --allow-empty)
-          
-      - name: push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main 
+          name: forex-monitor-distributions
+          path: dist/*
+          if-no-files-found: error
