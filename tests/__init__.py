@@ -1,0 +1,2 @@
+"""Forex monitor test suite."""
+
