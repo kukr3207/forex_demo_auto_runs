@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Callable, Iterable, Mapping, Optional, Sequence, Tuple
+from typing import Callable, Mapping, Optional, Sequence, Tuple
 
 from forex_monitor.alerts.evaluator import Evaluation, RuleEvaluator, render_alert_message
 from forex_monitor.alerts.notifications import NotificationResult, Notifier

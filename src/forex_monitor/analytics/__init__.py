@@ -26,4 +26,3 @@ __all__ = [
     "simple_moving_average",
     "summarize_returns",
 ]
-

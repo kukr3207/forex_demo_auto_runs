@@ -58,4 +58,3 @@ class SequenceIdFactory:
 
 
 IdentifierFactory = Callable[[], str]
-

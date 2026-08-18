@@ -168,7 +168,9 @@ class WindowTests(unittest.TestCase):
         first = TimeWindow(BASE_TIME, BASE_TIME + timedelta(hours=2))
         second = TimeWindow(BASE_TIME + timedelta(hours=1), BASE_TIME + timedelta(hours=3))
         third = TimeWindow(BASE_TIME + timedelta(hours=3), BASE_TIME + timedelta(hours=4))
-        self.assertEqual(merge_windows((third, first, second)), (TimeWindow(first.start, third.end),))
+        self.assertEqual(
+            merge_windows((third, first, second)), (TimeWindow(first.start, third.end),)
+        )
 
     def test_missing_windows(self) -> None:
         requested = TimeWindow(BASE_TIME, BASE_TIME + timedelta(hours=6))

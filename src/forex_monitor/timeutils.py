@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from typing import Iterable, Iterator, Optional, Sequence, Tuple
 
 from forex_monitor.models import Timeframe, ensure_utc
-
 
 UTC = timezone.utc
 
@@ -161,16 +160,18 @@ class TimeWindow:
         instant = ensure_utc(value)
         return self.start <= instant < self.end
 
-    def overlaps(self, other: "TimeWindow") -> bool:
+    def overlaps(self, other: TimeWindow) -> bool:
         return self.start < other.end and other.start < self.end
 
-    def intersection(self, other: "TimeWindow") -> Optional["TimeWindow"]:
+    def intersection(self, other: TimeWindow) -> Optional[TimeWindow]:
         start = max(self.start, other.start)
         end = min(self.end, other.end)
         return TimeWindow(start, end) if start < end else None
 
-    def split(self, timeframe: Timeframe) -> Tuple["TimeWindow", ...]:
-        return tuple(TimeWindow(start, end) for start, end in iter_buckets(self.start, self.end, timeframe))
+    def split(self, timeframe: Timeframe) -> Tuple[TimeWindow, ...]:
+        return tuple(
+            TimeWindow(start, end) for start, end in iter_buckets(self.start, self.end, timeframe)
+        )
 
 
 def merge_windows(windows: Iterable[TimeWindow]) -> Tuple[TimeWindow, ...]:
@@ -211,4 +212,3 @@ def missing_windows(
     if cursor < requested.end:
         result.append(TimeWindow(cursor, requested.end))
     return tuple(result)
-

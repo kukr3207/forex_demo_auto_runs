@@ -90,4 +90,3 @@ def build_application(
         analysis=analysis,
         alerts=alerts,
     )
-

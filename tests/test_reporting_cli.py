@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import argparse
 import io
 import json
 import tempfile
 import unittest
 from contextlib import redirect_stdout
-from datetime import timedelta
 from pathlib import Path
 
-from forex_monitor.analytics.aggregation import aggregate_quotes
 from forex_monitor.application import build_application
 from forex_monitor.cli import build_parser, dispatch, main
 from forex_monitor.config import AppConfig, DatabaseConfig, RuntimeConfig
@@ -37,7 +34,9 @@ class SerializationTests(unittest.TestCase):
     def test_quotes_csv_has_stable_columns(self) -> None:
         text = quotes_csv((quote(),))
         lines = text.splitlines()
-        self.assertEqual(lines[0], "symbol,bid,ask,mid,spread,volume,observed_at,provider,source_id")
+        self.assertEqual(
+            lines[0], "symbol,bid,ask,mid,spread,volume,observed_at,provider,source_id"
+        )
         self.assertTrue(lines[1].startswith("EURUSD,1.1000,1.1002,"))
 
     def test_candles_csv_has_boolean_text(self) -> None:

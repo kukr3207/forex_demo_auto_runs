@@ -83,7 +83,10 @@ class RuleEvaluator:
         threshold: Decimal,
     ) -> tuple[bool, str]:
         if operator is AlertOperator.GREATER_THAN:
-            return current > threshold, f"{current} is {'above' if current > threshold else 'not above'} {threshold}"
+            return (
+                current > threshold,
+                f"{current} is {'above' if current > threshold else 'not above'} {threshold}",
+            )
         if operator is AlertOperator.GREATER_OR_EQUAL:
             matched = current >= threshold
             return matched, f"{current} is {'at or above' if matched else 'below'} {threshold}"
@@ -143,4 +146,3 @@ def render_alert_message(rule: AlertRule, evaluation: Evaluation) -> str:
         f"{rule.name}: {rule.symbol} {rule.metric} is {evaluation.current_value}; "
         f"condition {rule.operator.value} {rule.threshold} matched."
     )
-

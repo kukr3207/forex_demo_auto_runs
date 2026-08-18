@@ -21,8 +21,7 @@ class ProviderNormalizer(Protocol):
         self,
         response: RawProviderResponse,
         symbols: Sequence[str],
-    ) -> Tuple[Quote, ...]:
-        ...
+    ) -> Tuple[Quote, ...]: ...
 
 
 def canonical_json(value: Any) -> str:

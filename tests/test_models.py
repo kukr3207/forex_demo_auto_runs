@@ -12,7 +12,6 @@ from forex_monitor.models import (
     AlertRule,
     AlertStatus,
     AnalysisResult,
-    Candle,
     IndicatorValue,
     IngestionRun,
     Instrument,
@@ -241,9 +240,7 @@ class AlertModelTests(unittest.TestCase):
 
 class AnalysisAndRunTests(unittest.TestCase):
     def test_analysis_indicator_lookup(self) -> None:
-        indicator = IndicatorValue(
-            "EURUSD", "RSI", Timeframe.HOUR_1, BASE_TIME, Decimal("55")
-        )
+        indicator = IndicatorValue("EURUSD", "RSI", Timeframe.HOUR_1, BASE_TIME, Decimal("55"))
         analysis = AnalysisResult(
             "EURUSD",
             Timeframe.HOUR_1,
@@ -293,4 +290,3 @@ class SequenceValidationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

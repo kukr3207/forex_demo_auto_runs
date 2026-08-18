@@ -7,7 +7,7 @@ import sqlite3
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Generator, Iterable, Iterator, Mapping, Optional, Sequence
+from typing import Any, Generator, Iterable, Mapping, Optional, Sequence
 
 from forex_monitor.config import DatabaseConfig
 from forex_monitor.errors import StorageError
@@ -34,7 +34,9 @@ class Transaction:
         try:
             return self.connection.executemany(sql, parameters)
         except sqlite3.DatabaseError as error:
-            raise StorageError("database batch statement failed", details={"sql": sql[:120]}) from error
+            raise StorageError(
+                "database batch statement failed", details={"sql": sql[:120]}
+            ) from error
 
     def fetch_one(
         self,
@@ -90,7 +92,9 @@ class Database:
                 check_same_thread=True,
             )
         except sqlite3.Error as error:
-            raise StorageError("could not open database", details={"path": str(self.path)}) from error
+            raise StorageError(
+                "could not open database", details={"path": str(self.path)}
+            ) from error
         connection.row_factory = sqlite3.Row
         connection.execute(f"PRAGMA busy_timeout = {int(self.config.busy_timeout_seconds * 1000)}")
         connection.execute(f"PRAGMA journal_mode = {self.config.journal_mode}")
@@ -217,9 +221,11 @@ class Database:
             with self.transaction() as transaction:
                 quick_check = str(transaction.scalar("PRAGMA quick_check", default="unknown"))
                 version = int(
-                    transaction.scalar(
-                        "SELECT COALESCE(MAX(version), 0) FROM schema_migrations",
-                        default=0,
+                    str(
+                        transaction.scalar(
+                            "SELECT COALESCE(MAX(version), 0) FROM schema_migrations",
+                            default=0,
+                        )
                     )
                 )
         except StorageError as error:
@@ -231,4 +237,3 @@ class Database:
             "latestSchemaVersion": self.latest_schema_version,
             "path": str(self.path),
         }
-

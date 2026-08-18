@@ -19,7 +19,7 @@ from forex_monitor.alerts.evaluator import render_alert_message
 from forex_monitor.alerts.notifications import JsonlFileNotifier
 from forex_monitor.errors import AlertEvaluationError, NotFoundError
 from forex_monitor.ids import SequenceIdFactory
-from forex_monitor.models import Alert, AlertOperator, AlertRule, AlertStatus, Instrument
+from forex_monitor.models import Alert, AlertOperator, AlertRule, Instrument
 from forex_monitor.scheduler import (
     JobRepository,
     JobStatus,
@@ -232,7 +232,11 @@ class LeaseTests(unittest.TestCase):
             leases = LeaseRepository(repositories.database)
             self.assertTrue(leases.acquire("job:x", "one", now=BASE_TIME, ttl_seconds=60))
             self.assertFalse(leases.acquire("job:x", "two", now=BASE_TIME, ttl_seconds=60))
-            self.assertTrue(leases.acquire("job:x", "two", now=BASE_TIME + timedelta(seconds=60), ttl_seconds=60))
+            self.assertTrue(
+                leases.acquire(
+                    "job:x", "two", now=BASE_TIME + timedelta(seconds=60), ttl_seconds=60
+                )
+            )
 
     def test_owner_can_extend_and_release(self) -> None:
         with TemporaryRepositories() as repositories:
@@ -304,4 +308,3 @@ class SchedulerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

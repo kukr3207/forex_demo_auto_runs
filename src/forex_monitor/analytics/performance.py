@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal, localcontext
-from typing import Iterable, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 from forex_monitor.analytics.indicators import mean, standard_deviation
 from forex_monitor.errors import AnalyticsError
 from forex_monitor.models import as_decimal
-
 
 ZERO = Decimal("0")
 ONE = Decimal("1")
@@ -238,4 +237,3 @@ def summarize_returns(
         worst_period=min(values),
         average_period=mean(values),
     )
-

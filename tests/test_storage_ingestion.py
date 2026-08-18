@@ -22,9 +22,21 @@ from forex_monitor.models import (
     Timeframe,
 )
 from forex_monitor.providers import FixtureProvider
-from forex_monitor.storage import Database, RepositorySet
-from forex_monitor.storage.migrations import MIGRATIONS, Migration, pending_migrations, validate_migrations
-from tests.support import BASE_TIME, MutableClock, TemporaryRepositories, candle, quote, quote_series
+from forex_monitor.storage import Database
+from forex_monitor.storage.migrations import (
+    MIGRATIONS,
+    Migration,
+    pending_migrations,
+    validate_migrations,
+)
+from tests.support import (
+    BASE_TIME,
+    MutableClock,
+    TemporaryRepositories,
+    candle,
+    quote,
+    quote_series,
+)
 
 
 class MigrationTests(unittest.TestCase):
@@ -68,14 +80,16 @@ class DatabaseTests(unittest.TestCase):
 
     def test_outer_transaction_rolls_back(self) -> None:
         with TemporaryRepositories() as repositories:
-            with self.assertRaises(RuntimeError):
-                with repositories.database.transaction(write=True) as transaction:
-                    repositories.instruments.upsert(
-                        Instrument.from_symbol("EURUSD"),
-                        now=BASE_TIME,
-                        transaction=transaction,
-                    )
-                    raise RuntimeError("late failure")
+            with (
+                self.assertRaises(RuntimeError),
+                repositories.database.transaction(write=True) as transaction,
+            ):
+                repositories.instruments.upsert(
+                    Instrument.from_symbol("EURUSD"),
+                    now=BASE_TIME,
+                    transaction=transaction,
+                )
+                raise RuntimeError("late failure")
             self.assertIsNone(repositories.instruments.get("EURUSD"))
 
     def test_nested_failure_can_be_caught(self) -> None:
@@ -122,13 +136,17 @@ class InstrumentRepositoryTests(unittest.TestCase):
                 replace(Instrument.from_symbol("EURUSD"), active=False),
                 now=BASE_TIME,
             )
-            self.assertEqual([item.symbol for item in repositories.instruments.list()], ["EURUSD", "GBPUSD"])
-            self.assertEqual([item.symbol for item in repositories.instruments.list(active_only=True)], ["GBPUSD"])
+            self.assertEqual(
+                [item.symbol for item in repositories.instruments.list()], ["EURUSD", "GBPUSD"]
+            )
+            self.assertEqual(
+                [item.symbol for item in repositories.instruments.list(active_only=True)],
+                ["GBPUSD"],
+            )
 
     def test_require_missing_has_typed_error(self) -> None:
-        with TemporaryRepositories() as repositories:
-            with self.assertRaises(NotFoundError):
-                repositories.instruments.require("EURUSD")
+        with TemporaryRepositories() as repositories, self.assertRaises(NotFoundError):
+            repositories.instruments.require("EURUSD")
 
 
 class QuoteRepositoryTests(unittest.TestCase):
@@ -193,7 +211,11 @@ class CandleRepositoryTests(unittest.TestCase):
         with TemporaryRepositories() as repositories:
             repositories.instruments.upsert(Instrument.from_symbol("EURUSD"), now=BASE_TIME)
             original = candle()
-            updated = replace(original, close=original.close + Decimal("0.001"), high=original.high + Decimal("0.001"))
+            updated = replace(
+                original,
+                close=original.close + Decimal("0.001"),
+                high=original.high + Decimal("0.001"),
+            )
             repositories.candles.upsert(original, now=BASE_TIME)
             repositories.candles.upsert(updated, now=BASE_TIME + timedelta(seconds=1))
             self.assertEqual(repositories.candles.range("EURUSD", Timeframe.HOUR_1), (updated,))
@@ -248,8 +270,14 @@ class AlertRepositoryTests(unittest.TestCase):
         self.repositories = self.context.__enter__()
         self.repositories.instruments.upsert(Instrument.from_symbol("EURUSD"), now=BASE_TIME)
         self.rule = AlertRule(
-            "rule_1", "High", "EURUSD", "mid", AlertOperator.GREATER_THAN,
-            Decimal("1.2"), created_at=BASE_TIME, updated_at=BASE_TIME,
+            "rule_1",
+            "High",
+            "EURUSD",
+            "mid",
+            AlertOperator.GREATER_THAN,
+            Decimal("1.2"),
+            created_at=BASE_TIME,
+            updated_at=BASE_TIME,
         )
         self.repositories.alerts.save_rule(self.rule)
 
@@ -264,12 +292,21 @@ class AlertRepositoryTests(unittest.TestCase):
         disabled = replace(self.rule, enabled=False)
         self.repositories.alerts.save_rule(disabled)
         self.assertEqual(self.repositories.alerts.rules_for("EURUSD"), ())
-        self.assertEqual(self.repositories.alerts.rules_for("EURUSD", enabled_only=False), (disabled,))
+        self.assertEqual(
+            self.repositories.alerts.rules_for("EURUSD", enabled_only=False), (disabled,)
+        )
 
     def test_alert_lifecycle(self) -> None:
         alert = Alert(
-            "alert_1", self.rule.id, "EURUSD", "mid", Decimal("1.3"),
-            self.rule.threshold, self.rule.operator, BASE_TIME, "message",
+            "alert_1",
+            self.rule.id,
+            "EURUSD",
+            "mid",
+            Decimal("1.3"),
+            self.rule.threshold,
+            self.rule.operator,
+            BASE_TIME,
+            "message",
         )
         self.repositories.alerts.add_alert(alert)
         self.assertEqual(self.repositories.alerts.pending(), (alert,))

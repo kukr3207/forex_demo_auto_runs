@@ -62,8 +62,17 @@ def candles_csv(candles: Sequence[Candle]) -> str:
     writer = csv.writer(stream, lineterminator="\n")
     writer.writerow(
         [
-            "symbol", "timeframe", "opened_at", "closed_at", "open", "high",
-            "low", "close", "volume", "sample_count", "complete",
+            "symbol",
+            "timeframe",
+            "opened_at",
+            "closed_at",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "sample_count",
+            "complete",
         ]
     )
     for candle in candles:

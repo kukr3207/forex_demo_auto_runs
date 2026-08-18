@@ -6,9 +6,9 @@ import json
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Callable, Dict, Mapping, Optional, Protocol, Sequence, Tuple
+from typing import Callable, Mapping, Optional, Protocol, Tuple
 
-from forex_monitor.errors import NotFoundError, StorageConflictError
+from forex_monitor.errors import NotFoundError
 from forex_monitor.ids import IdentifierFactory, uuid_hex
 from forex_monitor.models import ensure_utc, format_timestamp, parse_timestamp
 from forex_monitor.storage import Database, Transaction
@@ -91,8 +91,7 @@ class JobExecution:
 
 
 class JobHandler(Protocol):
-    def __call__(self, job: ScheduledJob) -> Optional[str]:
-        ...
+    def __call__(self, job: ScheduledJob) -> Optional[str]: ...
 
 
 @dataclass
@@ -174,7 +173,7 @@ class JobRepository:
         return ScheduledJob(
             id=str(row["id"]),
             name=str(row["name"]),
-            schedule_seconds=int(row["schedule_seconds"]),
+            schedule_seconds=int(str(row["schedule_seconds"])),
             enabled=bool(row["enabled"]),
             next_run_at=parse_timestamp(row["next_run_at"]),
             last_started_at=(
@@ -184,7 +183,7 @@ class JobRepository:
                 parse_timestamp(row["last_finished_at"]) if row["last_finished_at"] else None
             ),
             last_status=JobStatus(str(row["last_status"])) if row["last_status"] else None,
-            consecutive_failures=int(row["consecutive_failures"]),
+            consecutive_failures=int(str(row["consecutive_failures"])),
             payload=payload,
         )
 
@@ -279,7 +278,9 @@ class Scheduler:
             return None
         handler = self.handlers.get(job.name)
         if handler is None:
-            raise NotFoundError("scheduled job handler was not registered", details={"name": job.name})
+            raise NotFoundError(
+                "scheduled job handler was not registered", details={"name": job.name}
+            )
         lock_name = f"job:{job.id}"
         started_at = ensure_utc(self.clock())
         if not self.leases.acquire(
@@ -304,7 +305,9 @@ class Scheduler:
             next_run_at=started.next_after(finished_at),
             last_finished_at=finished_at,
             last_status=status,
-            consecutive_failures=(started.consecutive_failures + 1 if status is JobStatus.FAILED else 0),
+            consecutive_failures=(
+                started.consecutive_failures + 1 if status is JobStatus.FAILED else 0
+            ),
         )
         try:
             self.jobs.save(completed)

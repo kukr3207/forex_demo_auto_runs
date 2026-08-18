@@ -193,7 +193,11 @@ def dispatch(args: argparse.Namespace, application: Application) -> object:
     reports = ReportService(application.repositories)
     if args.command == "report":
         report = reports.market_report(history_limit=args.history_limit, run_limit=args.run_limit)
-        text = report.to_markdown() if args.format == "markdown" else report.to_json(pretty=args.pretty)
+        text = (
+            report.to_markdown()
+            if args.format == "markdown"
+            else report.to_json(pretty=args.pretty)
+        )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             with args.output.open("w", encoding="utf-8", newline="\n") as handle:

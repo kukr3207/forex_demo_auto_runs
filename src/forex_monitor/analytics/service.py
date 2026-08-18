@@ -91,9 +91,16 @@ class AnalysisService:
         macd_value = macd(closes)[-1]
         atr_value = average_true_range(candles, 14)[-1]
         bands = bollinger_bands(closes, 20)[-1]
-        if None in {ema_fast, ema_slow, rsi_value, atr_value} or macd_value is None or bands is None:
+        if (
+            ema_fast is None
+            or ema_slow is None
+            or rsi_value is None
+            or atr_value is None
+            or macd_value is None
+            or bands is None
+        ):
             raise AnalyticsError("analysis indicators are not ready")
-        values = {
+        values: Mapping[str, Decimal] = {
             "ema_fast": ema_fast,
             "ema_slow": ema_slow,
             "rsi": rsi_value,

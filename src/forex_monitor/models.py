@@ -13,10 +13,9 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from enum import Enum
-from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
+from typing import Dict, Iterable, Mapping, Optional, Sequence, Tuple, cast
 
 from forex_monitor.errors import ValidationError
-
 
 _SYMBOL_PATTERN = re.compile(r"^[A-Z][A-Z0-9._-]{1,19}$")
 _CURRENCY_PATTERN = re.compile(r"^[A-Z]{3}$")
@@ -151,7 +150,7 @@ class Timeframe(str, Enum):
         }[self]
 
     @classmethod
-    def parse(cls, value: object) -> "Timeframe":
+    def parse(cls, value: object) -> Timeframe:
         if isinstance(value, cls):
             return value
         if not isinstance(value, str):
@@ -183,7 +182,7 @@ class AlertOperator(str, Enum):
     CROSSES_BELOW = "crosses_below"
 
     @classmethod
-    def parse(cls, value: object) -> "AlertOperator":
+    def parse(cls, value: object) -> AlertOperator:
         if isinstance(value, cls):
             return value
         if not isinstance(value, str):
@@ -251,7 +250,7 @@ class Instrument:
         *,
         precision: Optional[int] = None,
         pip_size: Optional[object] = None,
-    ) -> "Instrument":
+    ) -> Instrument:
         normalized = _symbol(symbol)
         if len(normalized) != 6 or not normalized.isalpha():
             raise ValidationError("currency-pair symbols must contain six letters")
@@ -344,7 +343,13 @@ class Quote:
         }
 
     @classmethod
-    def from_mapping(cls, value: Mapping[str, object]) -> "Quote":
+    def from_mapping(cls, value: Mapping[str, object]) -> Quote:
+        metadata_value = value.get("metadata", {})
+        metadata = (
+            cast(Mapping[str, object], metadata_value)
+            if isinstance(metadata_value, Mapping)
+            else {}
+        )
         return cls(
             symbol=str(value.get("symbol", "")),
             bid=as_decimal(value.get("bid"), "bid"),
@@ -356,15 +361,9 @@ class Quote:
             provider=str(value.get("provider", "")),
             source_id=str(value["sourceId"]) if value.get("sourceId") is not None else None,
             volume=(
-                as_decimal(value["volume"], "volume")
-                if value.get("volume") is not None
-                else None
+                as_decimal(value["volume"], "volume") if value.get("volume") is not None else None
             ),
-            metadata=(
-                value.get("metadata", {})
-                if isinstance(value.get("metadata", {}), Mapping)
-                else {}
-            ),
+            metadata=metadata,
         )
 
 
@@ -630,7 +629,7 @@ class AlertRule:
         object.__setattr__(self, "last_triggered_at", last_triggered_at)
         object.__setattr__(self, "metadata", _metadata(self.metadata))
 
-    def with_trigger(self, triggered_at: datetime) -> "AlertRule":
+    def with_trigger(self, triggered_at: datetime) -> AlertRule:
         instant = ensure_utc(triggered_at, "triggered at")
         return replace(self, last_triggered_at=instant, updated_at=max(self.updated_at, instant))
 
@@ -678,9 +677,7 @@ class Alert:
         triggered_at = ensure_utc(self.triggered_at, "triggered at")
         delivered_at = ensure_utc(self.delivered_at, "delivered at") if self.delivered_at else None
         acknowledged_at = (
-            ensure_utc(self.acknowledged_at, "acknowledged at")
-            if self.acknowledged_at
-            else None
+            ensure_utc(self.acknowledged_at, "acknowledged at") if self.acknowledged_at else None
         )
         if delivered_at and delivered_at < triggered_at:
             raise ValidationError("delivered at cannot precede triggered at")
@@ -692,7 +689,9 @@ class Alert:
         object.__setattr__(self, "rule_id", _identifier(self.rule_id, "rule id"))
         object.__setattr__(self, "symbol", _symbol(self.symbol))
         object.__setattr__(self, "metric", self.metric.strip().lower())
-        object.__setattr__(self, "observed_value", as_decimal(self.observed_value, "observed value"))
+        object.__setattr__(
+            self, "observed_value", as_decimal(self.observed_value, "observed value")
+        )
         object.__setattr__(self, "threshold", as_decimal(self.threshold, "threshold"))
         object.__setattr__(self, "operator", AlertOperator.parse(self.operator))
         object.__setattr__(self, "triggered_at", triggered_at)
@@ -774,7 +773,7 @@ class IngestionRun:
         rejected_quotes: int = 0,
         error_code: Optional[str] = None,
         error_message: Optional[str] = None,
-    ) -> "IngestionRun":
+    ) -> IngestionRun:
         if status is RunStatus.RUNNING:
             raise ValidationError("a finished run cannot remain running")
         return replace(

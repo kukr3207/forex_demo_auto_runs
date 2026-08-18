@@ -9,7 +9,6 @@ from typing import Iterable, Optional, Sequence, Tuple
 from forex_monitor.errors import AnalyticsError
 from forex_monitor.models import Candle, as_decimal
 
-
 ZERO = Decimal("0")
 ONE = Decimal("1")
 HUNDRED = Decimal("100")
@@ -73,7 +72,9 @@ def weighted_moving_average(values: Sequence[object], period: int) -> Tuple[Opti
     result: list[Optional[Decimal]] = [None] * (period - 1)
     for end in range(period, len(numbers) + 1):
         window = numbers[end - period : end]
-        result.append(sum((value * weight for value, weight in zip(window, weights)), ZERO) / divisor)
+        result.append(
+            sum((value * weight for value, weight in zip(window, weights)), ZERO) / divisor
+        )
     return tuple(result)
 
 
@@ -145,7 +146,9 @@ def rate_of_change(values: Sequence[object], period: int) -> Tuple[Optional[Deci
     result: list[Optional[Decimal]] = [None] * period
     for index in range(period, len(numbers)):
         previous = numbers[index - period]
-        result.append(None if previous == ZERO else (numbers[index] - previous) / previous * HUNDRED)
+        result.append(
+            None if previous == ZERO else (numbers[index] - previous) / previous * HUNDRED
+        )
     return tuple(result)
 
 
@@ -264,9 +267,9 @@ def macd(
         if fast_value is None or slow_value is None:
             lines.append(None)
         else:
-            line = fast_value - slow_value
-            lines.append(line)
-            defined_lines.append(line)
+            computed_line = fast_value - slow_value
+            lines.append(computed_line)
+            defined_lines.append(computed_line)
     signal_values: Tuple[Optional[Decimal], ...]
     if len(defined_lines) < signal_period:
         signal_values = tuple([None] * len(defined_lines))
@@ -274,17 +277,17 @@ def macd(
         signal_values = exponential_moving_average(defined_lines, signal_period)
     result: list[Optional[MacdPoint]] = []
     signal_index = 0
-    for line in lines:
-        if line is None:
+    for current_line in lines:
+        if current_line is None:
             result.append(None)
             continue
         signal_value = signal_values[signal_index]
         signal_index += 1
         result.append(
             MacdPoint(
-                line=line,
+                line=current_line,
                 signal=signal_value,
-                histogram=line - signal_value if signal_value is not None else None,
+                histogram=current_line - signal_value if signal_value is not None else None,
             )
         )
     return tuple(result)
@@ -311,11 +314,11 @@ def stochastic_oscillator(
         window = candles[end - period : end]
         high = max(candle.high for candle in window)
         low = min(candle.low for candle in window)
-        raw_k.append(Decimal("50") if high == low else (window[-1].close - low) / (high - low) * HUNDRED)
+        raw_k.append(
+            Decimal("50") if high == low else (window[-1].close - low) / (high - low) * HUNDRED
+        )
     smoothed = (
-        simple_moving_average(raw_k, smooth)
-        if len(raw_k) >= smooth
-        else tuple([None] * len(raw_k))
+        simple_moving_average(raw_k, smooth) if len(raw_k) >= smooth else tuple([None] * len(raw_k))
     )
     result: list[Optional[StochasticPoint]] = [None] * (period - 1)
     result.extend(StochasticPoint(k, d) for k, d in zip(raw_k, smoothed))
@@ -377,4 +380,3 @@ def linear_slope(values: Sequence[object]) -> Decimal:
     numerator = sum(((x - mean_x) * (y - mean_y) for x, y in zip(xs, numbers)), ZERO)
     denominator = sum(((x - mean_x) ** 2 for x in xs), ZERO)
     return ZERO if denominator == ZERO else numerator / denominator
-

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import unittest
 from collections import deque
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from decimal import Decimal
 from typing import Iterable, Optional, Sequence
 
@@ -14,7 +14,6 @@ from forex_monitor.errors import (
     ProviderRateLimitError,
     ProviderResponseError,
 )
-from forex_monitor.models import Quote
 from forex_monitor.providers import FixtureProvider, FxssiNormalizer, HttpJsonProvider
 from forex_monitor.providers.base import (
     RawProviderResponse,
@@ -24,7 +23,11 @@ from forex_monitor.providers.base import (
     normalize_symbols,
     parse_retry_after,
 )
-from forex_monitor.providers.normalization import GenericQuoteNormalizer, canonical_json, payload_checksum
+from forex_monitor.providers.normalization import (
+    GenericQuoteNormalizer,
+    canonical_json,
+    payload_checksum,
+)
 from tests.support import BASE_TIME, MutableClock, quote
 
 
@@ -217,9 +220,7 @@ class FxssiNormalizerTests(unittest.TestCase):
 
 class FixtureProviderTests(unittest.TestCase):
     def test_filters_and_reorders_batch(self) -> None:
-        provider = FixtureProvider(
-            [(quote("GBPUSD"), quote("EURUSD", source_id="source_2"))]
-        )
+        provider = FixtureProvider([(quote("GBPUSD"), quote("EURUSD", source_id="source_2"))])
         result = provider.fetch_quotes(("EURUSD", "GBPUSD"))
         self.assertEqual([item.symbol for item in result], ["EURUSD", "GBPUSD"])
         self.assertEqual(provider.calls, [("EURUSD", "GBPUSD")])
@@ -250,7 +251,9 @@ class HttpProviderTests(unittest.TestCase):
         transport = FakeTransport(responses)
         sleeps: list[float] = []
         provider = HttpJsonProvider(
-            ProviderConfig(name="demo", base_url="https://example.test/quotes", max_attempts=attempts),
+            ProviderConfig(
+                name="demo", base_url="https://example.test/quotes", max_attempts=attempts
+            ),
             GenericQuoteNormalizer("demo"),
             transport=transport,
             clock=MutableClock(),

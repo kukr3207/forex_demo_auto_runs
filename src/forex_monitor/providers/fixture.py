@@ -5,12 +5,11 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Deque, Iterable, Mapping, Optional, Sequence, Tuple, Union
+from typing import Callable, Deque, Iterable, Mapping, Optional, Sequence, Tuple, Union, cast
 
 from forex_monitor.errors import ProviderError
 from forex_monitor.models import Quote, ensure_utc
 from forex_monitor.providers.base import ProviderHealth, normalize_symbols
-
 
 FixtureItem = Union[Sequence[Quote], BaseException]
 
@@ -27,7 +26,7 @@ class FixtureProvider:
     batches: Iterable[FixtureItem]
     provider_name: str = "fixture"
     repeat_last: bool = True
-    now: callable = field(default=lambda: datetime.now(timezone.utc))
+    now: Callable[[], datetime] = field(default=lambda: datetime.now(timezone.utc))
 
     def __post_init__(self) -> None:
         self.provider_name = self.provider_name.strip().lower()
@@ -88,7 +87,7 @@ class FixtureProvider:
         *,
         provider_name: str = "fixture",
         repeat_last: bool = True,
-    ) -> "FixtureProvider":
+    ) -> FixtureProvider:
         normalized = []
         for batch in batches:
             normalized.append(
@@ -97,16 +96,15 @@ class FixtureProvider:
                         symbol=str(item.get("symbol", "")),
                         bid=item.get("bid"),  # type: ignore[arg-type]
                         ask=item.get("ask"),  # type: ignore[arg-type]
-                        observed_at=(
+                        observed_at=cast(
+                            datetime,
                             item["observed_at"]
                             if isinstance(item.get("observed_at"), datetime)
-                            else datetime.fromisoformat(str(item.get("observed_at")))
+                            else datetime.fromisoformat(str(item.get("observed_at"))),
                         ),
                         provider=provider_name,
                         source_id=(
-                            str(item["source_id"])
-                            if item.get("source_id") is not None
-                            else None
+                            str(item["source_id"]) if item.get("source_id") is not None else None
                         ),
                         volume=item.get("volume"),  # type: ignore[arg-type]
                     )
@@ -114,4 +112,3 @@ class FixtureProvider:
                 )
             )
         return cls(normalized, provider_name=provider_name, repeat_last=repeat_last)
-

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Callable, Mapping, Optional, Sequence, Tuple
+from typing import Callable, Mapping, Sequence, Tuple
 
 from forex_monitor.errors import ForexMonitorError, IngestionError, ProviderError, StorageError
 from forex_monitor.ids import IdentifierFactory, uuid_hex
@@ -101,8 +101,8 @@ class IngestionService:
         requested: Sequence[str],
         finished_at: datetime,
     ) -> IngestionOutcome:
-        imported = []
-        duplicates = []
+        imported: list[Quote] = []
+        duplicates: list[Quote] = []
         with self.repositories.database.transaction(write=True) as transaction:
             if self.auto_register_instruments:
                 for quote in quotes:

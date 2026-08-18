@@ -7,12 +7,11 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
-from typing import Iterable, Iterator, Optional, Sequence, Tuple
+from typing import Optional, Tuple
 
 from forex_monitor.config import DatabaseConfig
 from forex_monitor.models import Candle, Quote, Timeframe
 from forex_monitor.storage import Database, RepositorySet
-
 
 UTC = timezone.utc
 BASE_TIME = datetime(2026, 1, 5, 12, 0, tzinfo=UTC)
@@ -150,4 +149,3 @@ class TemporaryRepositories:
     def __exit__(self, *args: object) -> None:
         if self._temporary:
             self._temporary.cleanup()
-

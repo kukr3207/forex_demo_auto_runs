@@ -7,7 +7,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Protocol, Sequence, Tuple
+from typing import Callable, List, Optional, Protocol, Sequence, TextIO, Tuple
 
 from forex_monitor.models import Alert, format_timestamp
 
@@ -37,11 +37,9 @@ class Notifier(Protocol):
     """Alert delivery contract."""
 
     @property
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
-    def notify(self, alert: Alert) -> NotificationResult:
-        ...
+    def notify(self, alert: Alert) -> NotificationResult: ...
 
 
 @dataclass
@@ -76,7 +74,7 @@ class MemoryNotifier:
 class ConsoleNotifier:
     """Write newline-delimited alert JSON to a text stream."""
 
-    stream: object = sys.stdout
+    stream: TextIO = sys.stdout
     clock: Callable[[], datetime] = field(default=lambda: datetime.now(timezone.utc))
 
     @property
@@ -149,8 +147,10 @@ class CompositeNotifier:
 
     def notify(self, alert: Alert) -> NotificationResult:
         results = self.notify_all(alert)
-        delivered = all(result.delivered for result in results) if self.require_all else any(
-            result.delivered for result in results
+        delivered = (
+            all(result.delivered for result in results)
+            if self.require_all
+            else any(result.delivered for result in results)
         )
         errors = "; ".join(
             f"{result.notifier}: {result.error}" for result in results if result.error
@@ -161,10 +161,11 @@ class CompositeNotifier:
             delivered,
             attempted_at,
             external_id=(
-                ",".join(result.external_id or result.notifier for result in results if result.delivered)
+                ",".join(
+                    result.external_id or result.notifier for result in results if result.delivered
+                )
                 if delivered
                 else None
             ),
             error=None if delivered else errors or "no notification channel accepted the alert",
         )
-

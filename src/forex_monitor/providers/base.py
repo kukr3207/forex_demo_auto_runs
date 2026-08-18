@@ -8,26 +8,14 @@ from typing import Any, Callable, Mapping, Optional, Protocol, Sequence, Tuple
 
 from forex_monitor.models import Quote, ensure_utc
 
+Clock = Callable[[], datetime]
+"""Callable returning an aware UTC datetime."""
 
-class Clock(Protocol):
-    """Callable returning an aware UTC datetime."""
+Sleeper = Callable[[float], None]
+"""Injectable sleep operation used by retry loops."""
 
-    def __call__(self) -> datetime:
-        ...
-
-
-class Sleeper(Protocol):
-    """Injectable sleep operation used by retry loops."""
-
-    def __call__(self, seconds: float) -> None:
-        ...
-
-
-class IdentifierFactory(Protocol):
-    """Callable returning a stable-format unique identifier."""
-
-    def __call__(self) -> str:
-        ...
+IdentifierFactory = Callable[[], str]
+"""Callable returning a stable-format unique identifier."""
 
 
 @dataclass(frozen=True)
@@ -67,7 +55,9 @@ class TransportResponse:
             raise ValueError("transport status must be a valid HTTP code")
         if self.elapsed_seconds < 0:
             raise ValueError("transport elapsed time cannot be negative")
-        object.__setattr__(self, "headers", {key.lower(): value for key, value in self.headers.items()})
+        object.__setattr__(
+            self, "headers", {key.lower(): value for key, value in self.headers.items()}
+        )
 
     @property
     def content_type(self) -> Optional[str]:
@@ -89,8 +79,7 @@ class TransportResponse:
 class HttpTransport(Protocol):
     """Synchronous HTTP transport used by the dependency-free provider."""
 
-    def send(self, request: TransportRequest) -> TransportResponse:
-        ...
+    def send(self, request: TransportRequest) -> TransportResponse: ...
 
 
 @dataclass(frozen=True)
@@ -150,14 +139,11 @@ class MarketDataProvider(Protocol):
     """Public contract consumed by the ingestion service."""
 
     @property
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
-    def fetch_quotes(self, symbols: Sequence[str]) -> Tuple[Quote, ...]:
-        ...
+    def fetch_quotes(self, symbols: Sequence[str]) -> Tuple[Quote, ...]: ...
 
-    def health(self) -> ProviderHealth:
-        ...
+    def health(self) -> ProviderHealth: ...
 
 
 def exponential_backoff(
@@ -174,7 +160,7 @@ def exponential_backoff(
         raise ValueError("attempt must be positive")
     if maximum_seconds < 0:
         raise ValueError("maximum backoff cannot be negative")
-    return min(initial_seconds * (2 ** (attempt - 1)), maximum_seconds)
+    return float(min(initial_seconds * (2 ** (attempt - 1)), maximum_seconds))
 
 
 def parse_retry_after(value: Optional[str]) -> Optional[float]:
@@ -213,4 +199,3 @@ def retryable_exception(error: BaseException) -> bool:
     """Default classifier for transient network errors."""
 
     return isinstance(error, (TimeoutError, ConnectionError, OSError))
-

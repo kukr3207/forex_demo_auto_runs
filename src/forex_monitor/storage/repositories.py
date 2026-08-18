@@ -142,7 +142,7 @@ class InstrumentRepository:
             symbol=str(row["symbol"]),
             base_currency=str(row["base_currency"]),
             quote_currency=str(row["quote_currency"]),
-            precision=int(row["precision"]),
+            precision=int(str(row["precision"])),
             pip_size=Decimal(str(row["pip_size"])),
             active=bool(row["active"]),
             display_name=str(row["display_name"]),
@@ -257,7 +257,7 @@ class QuoteRepository:
             rows = transaction.fetch_all(
                 f"""
                 SELECT * FROM quotes
-                WHERE {' AND '.join(clauses)}
+                WHERE {" AND ".join(clauses)}
                 ORDER BY observed_at {direction}, id {direction}
                 LIMIT ?
                 """,
@@ -268,12 +268,14 @@ class QuoteRepository:
     def count(self, symbol: Optional[str] = None) -> int:
         with self.database.transaction() as transaction:
             if symbol is None:
-                return int(transaction.scalar("SELECT COUNT(*) FROM quotes", default=0))
+                return int(str(transaction.scalar("SELECT COUNT(*) FROM quotes", default=0)))
             return int(
-                transaction.scalar(
-                    "SELECT COUNT(*) FROM quotes WHERE symbol = ?",
-                    (symbol,),
-                    default=0,
+                str(
+                    transaction.scalar(
+                        "SELECT COUNT(*) FROM quotes WHERE symbol = ?",
+                        (symbol,),
+                        default=0,
+                    )
                 )
             )
 
@@ -374,7 +376,7 @@ class CandleRepository:
         with self.database.transaction() as transaction:
             rows = transaction.fetch_all(
                 f"""
-                SELECT * FROM candles WHERE {' AND '.join(clauses)}
+                SELECT * FROM candles WHERE {" AND ".join(clauses)}
                 ORDER BY opened_at ASC LIMIT ?
                 """,
                 parameters,
@@ -393,7 +395,7 @@ class CandleRepository:
             low=Decimal(str(row["low"])),
             close=Decimal(str(row["close"])),
             volume=Decimal(str(row["volume"])),
-            sample_count=int(row["sample_count"]),
+            sample_count=int(str(row["sample_count"])),
             complete=bool(row["complete"]),
         )
 
@@ -500,13 +502,11 @@ class IngestionRunRepository:
             started_at=parse_timestamp(row["started_at"]),
             finished_at=_optional_time(row["finished_at"]),
             requested_symbols=_json_strings(row["requested_symbols_json"]),
-            imported_quotes=int(row["imported_quotes"]),
-            duplicate_quotes=int(row["duplicate_quotes"]),
-            rejected_quotes=int(row["rejected_quotes"]),
+            imported_quotes=int(str(row["imported_quotes"])),
+            duplicate_quotes=int(str(row["duplicate_quotes"])),
+            rejected_quotes=int(str(row["rejected_quotes"])),
             error_code=str(row["error_code"]) if row["error_code"] is not None else None,
-            error_message=(
-                str(row["error_message"]) if row["error_message"] is not None else None
-            ),
+            error_message=(str(row["error_message"]) if row["error_message"] is not None else None),
         )
 
 
@@ -569,9 +569,7 @@ class AlertRepository:
             if enabled_only:
                 sql += " AND enabled = 1"
             sql += " ORDER BY created_at, id"
-            return tuple(
-                self._rule_from_row(row) for row in transaction.fetch_all(sql, (symbol,))
-            )
+            return tuple(self._rule_from_row(row) for row in transaction.fetch_all(sql, (symbol,)))
 
     def add_alert(
         self,
@@ -659,7 +657,7 @@ class AlertRepository:
             metric=str(row["metric"]),
             operator=AlertOperator(str(row["operator"])),
             threshold=Decimal(str(row["threshold"])),
-            cooldown_seconds=int(row["cooldown_seconds"]),
+            cooldown_seconds=int(str(row["cooldown_seconds"])),
             enabled=bool(row["enabled"]),
             created_at=parse_timestamp(row["created_at"]),
             updated_at=parse_timestamp(row["updated_at"]),

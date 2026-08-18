@@ -61,7 +61,9 @@ class BasicIndicatorTests(unittest.TestCase):
     def test_mean_variance_and_standard_deviation(self) -> None:
         self.assertEqual(mean((1, 2, 3, 4)), Decimal("2.5"))
         self.assertEqual(variance((1, 2, 3, 4)), Decimal("1.25"))
-        self.assertEqual(variance((1, 2, 3, 4), sample=True), Decimal("1.666666666666666666666666667"))
+        self.assertEqual(
+            variance((1, 2, 3, 4), sample=True), Decimal("1.666666666666666666666666667")
+        )
         self.assertAlmostEqual(float(standard_deviation((1, 2, 3, 4))), 1.11803398875)
 
     def test_simple_moving_average(self) -> None:
@@ -82,8 +84,12 @@ class BasicIndicatorTests(unittest.TestCase):
         self.assertEqual(len(first_seed), len(self.values))
 
     def test_rolling_extremes(self) -> None:
-        self.assertEqual(rolling_min((3, 2, 4, 1), 2), (None, Decimal("2"), Decimal("2"), Decimal("1")))
-        self.assertEqual(rolling_max((3, 2, 4, 1), 2), (None, Decimal("3"), Decimal("4"), Decimal("4")))
+        self.assertEqual(
+            rolling_min((3, 2, 4, 1), 2), (None, Decimal("2"), Decimal("2"), Decimal("1"))
+        )
+        self.assertEqual(
+            rolling_max((3, 2, 4, 1), 2), (None, Decimal("3"), Decimal("4"), Decimal("4"))
+        )
 
     def test_rolling_deviation(self) -> None:
         result = rolling_standard_deviation((1, 2, 3, 4), 2)
@@ -95,7 +101,11 @@ class BasicIndicatorTests(unittest.TestCase):
         self.assertEqual(rate_of_change((10, 12, 15), 1), (None, Decimal("20"), Decimal("25")))
 
     def test_period_validation(self) -> None:
-        for function in (simple_moving_average, weighted_moving_average, exponential_moving_average):
+        for function in (
+            simple_moving_average,
+            weighted_moving_average,
+            exponential_moving_average,
+        ):
             with self.subTest(function=function.__name__), self.assertRaises(AnalyticsError):
                 function((1, 2), 3)
 
@@ -152,7 +162,13 @@ class OscillatorTests(unittest.TestCase):
 class CandleIndicatorTests(unittest.TestCase):
     def test_true_range_uses_previous_close_gap(self) -> None:
         first = candle()
-        second = replace(candle(1), low=first.close + Decimal("0.01"), open=first.close + Decimal("0.02"), close=first.close + Decimal("0.021"), high=first.close + Decimal("0.022"))
+        second = replace(
+            candle(1),
+            low=first.close + Decimal("0.01"),
+            open=first.close + Decimal("0.02"),
+            close=first.close + Decimal("0.021"),
+            high=first.close + Decimal("0.022"),
+        )
         ranges = true_range((first, second))
         self.assertEqual(ranges[1], second.high - first.close)
 
@@ -164,7 +180,7 @@ class CandleIndicatorTests(unittest.TestCase):
 
     def test_vwap_ignores_zero_volume_until_available(self) -> None:
         values = tuple(replace(candle(index), volume=Decimal("0")) for index in range(2))
-        with_volume = values + (candle(2, volume="10"),)
+        with_volume = (*values, candle(2, volume="10"))
         result = volume_weighted_average_price(with_volume)
         self.assertEqual(result[:2], (None, None))
         self.assertIsNotNone(result[-1])
@@ -218,7 +234,9 @@ class PerformanceTests(unittest.TestCase):
         self.assertAlmostEqual(float(sum(logs)), float(Decimal("0.99").ln()))
 
     def test_cumulative_returns_compound(self) -> None:
-        self.assertEqual(cumulative_returns((Decimal("0.1"), Decimal("-0.1")))[-1], Decimal("-0.01"))
+        self.assertEqual(
+            cumulative_returns((Decimal("0.1"), Decimal("-0.1")))[-1], Decimal("-0.01")
+        )
 
     def test_drawdown_tracks_peak(self) -> None:
         returns = (Decimal("0.1"), Decimal("-0.2"), Decimal("0.1"))
@@ -276,4 +294,3 @@ class SignalTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

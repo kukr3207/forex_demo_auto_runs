@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Callable, Iterable, Optional, Sequence, Tuple
+from typing import Callable, Optional, Sequence, Tuple
 
 from forex_monitor.errors import AnalyticsError
 from forex_monitor.models import Candle, Quote, Timeframe, common_symbol
 from forex_monitor.timeutils import floor_time, interval_end
-
 
 PriceSelector = Callable[[Quote], Decimal]
 
@@ -136,7 +135,8 @@ def resample_candles(
                 close=group[-1].close,
                 volume=sum((candle.volume for candle in group), Decimal("0")),
                 sample_count=sum(candle.sample_count for candle in group),
-                complete=len(group) == expected_samples and all(candle.complete for candle in group),
+                complete=len(group) == expected_samples
+                and all(candle.complete for candle in group),
             )
         )
     return tuple(result)

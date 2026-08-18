@@ -21,7 +21,7 @@ class ForexMonitorError(Exception):
     def as_dict(self) -> Mapping[str, Any]:
         """Return a stable, JSON-friendly error envelope."""
 
-        result = {"error": self.message, "code": self.code}
+        result: dict[str, Any] = {"error": self.message, "code": self.code}
         if self.details:
             result["details"] = self.details
         return result
@@ -122,4 +122,3 @@ class ReportError(ForexMonitorError):
     """Raised when a report cannot be generated or serialized."""
 
     code = "report_error"
-

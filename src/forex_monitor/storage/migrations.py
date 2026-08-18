@@ -239,4 +239,3 @@ def pending_migrations(current_version: int) -> Iterable[Migration]:
 
 
 validate_migrations()
-

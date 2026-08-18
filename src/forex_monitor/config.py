@@ -17,10 +17,10 @@ def _required_text(value: object, name: str) -> str:
 
 
 def _positive_float(value: object, name: str, *, minimum: float = 0.0) -> float:
-    if isinstance(value, bool):
+    if isinstance(value, bool) or not isinstance(value, (str, int, float)):
         raise ConfigurationError(f"{name} must be a number")
     try:
-        number = float(value)  # type: ignore[arg-type]
+        number = float(value)
     except (TypeError, ValueError) as exc:
         raise ConfigurationError(f"{name} must be a number") from exc
     if number <= minimum:
@@ -29,16 +29,28 @@ def _positive_float(value: object, name: str, *, minimum: float = 0.0) -> float:
 
 
 def _positive_int(value: object, name: str, *, minimum: int = 0) -> int:
-    if isinstance(value, bool):
+    if isinstance(value, bool) or not isinstance(value, (str, int)):
         raise ConfigurationError(f"{name} must be an integer")
     try:
-        number = int(value)  # type: ignore[arg-type]
+        number = int(value)
     except (TypeError, ValueError) as exc:
         raise ConfigurationError(f"{name} must be an integer") from exc
     if str(number) != str(value).strip() and not isinstance(value, int):
         raise ConfigurationError(f"{name} must be an integer")
     if number <= minimum:
         raise ConfigurationError(f"{name} must be greater than {minimum}")
+    return number
+
+
+def _nonnegative_float(value: object, name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+        raise ConfigurationError(f"{name} must be a number")
+    try:
+        number = float(value)
+    except ValueError as exc:
+        raise ConfigurationError(f"{name} must be a number") from exc
+    if number < 0:
+        raise ConfigurationError(f"{name} cannot be negative")
     return number
 
 
@@ -81,7 +93,7 @@ class DatabaseConfig:
         object.__setattr__(self, "journal_mode", journal_mode)
 
     @classmethod
-    def from_mapping(cls, values: Mapping[str, object]) -> "DatabaseConfig":
+    def from_mapping(cls, values: Mapping[str, object]) -> DatabaseConfig:
         return cls(
             path=Path(str(values.get("path", "forex_monitor.db"))),
             busy_timeout_seconds=_positive_float(
@@ -122,7 +134,7 @@ class ProviderConfig:
             object.__setattr__(self, "api_key", key or None)
 
     @classmethod
-    def from_mapping(cls, values: Mapping[str, object]) -> "ProviderConfig":
+    def from_mapping(cls, values: Mapping[str, object]) -> ProviderConfig:
         return cls(
             name=str(values.get("name", "fxssi")),
             base_url=str(values.get("base_url", "https://c.fxssi.com/api/current-ratios")),
@@ -132,7 +144,10 @@ class ProviderConfig:
                 "provider timeout",
             ),
             max_attempts=_positive_int(values.get("max_attempts", 3), "provider max attempts"),
-            initial_backoff_seconds=float(values.get("initial_backoff_seconds", 0.25)),
+            initial_backoff_seconds=_nonnegative_float(
+                values.get("initial_backoff_seconds", 0.25),
+                "provider initial backoff",
+            ),
             user_agent=str(values.get("user_agent", "forex-monitor/1.0")),
         )
 
@@ -168,7 +183,7 @@ class RuntimeConfig:
         object.__setattr__(self, "log_level", level)
 
     @classmethod
-    def from_mapping(cls, values: Mapping[str, object]) -> "RuntimeConfig":
+    def from_mapping(cls, values: Mapping[str, object]) -> RuntimeConfig:
         return cls(
             instruments=_csv(
                 values.get("instruments", "EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD"),
@@ -194,7 +209,7 @@ class AppConfig:
     runtime: RuntimeConfig = field(default_factory=RuntimeConfig)
 
     @classmethod
-    def from_mapping(cls, values: Mapping[str, object]) -> "AppConfig":
+    def from_mapping(cls, values: Mapping[str, object]) -> AppConfig:
         database_values = values.get("database", {})
         provider_values = values.get("provider", {})
         runtime_values = values.get("runtime", {})
@@ -211,7 +226,7 @@ class AppConfig:
         )
 
     @classmethod
-    def from_environment(cls, environ: Optional[Mapping[str, str]] = None) -> "AppConfig":
+    def from_environment(cls, environ: Optional[Mapping[str, str]] = None) -> AppConfig:
         env = dict(os.environ if environ is None else environ)
         return cls(
             database=DatabaseConfig(
@@ -259,8 +274,7 @@ class AppConfig:
                     env.get("FOREX_BATCH_SIZE", "500"),
                     "FOREX_BATCH_SIZE",
                 ),
-                fail_fast=env.get("FOREX_FAIL_FAST", "false").lower()
-                in {"1", "true", "yes", "on"},
+                fail_fast=env.get("FOREX_FAIL_FAST", "false").lower() in {"1", "true", "yes", "on"},
                 log_level=env.get("FOREX_LOG_LEVEL", "INFO"),
             ),
         )
