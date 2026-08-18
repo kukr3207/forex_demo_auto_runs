@@ -104,6 +104,12 @@ def _symbol(value: object) -> str:
     return text
 
 
+def normalize_symbol(value: object) -> str:
+    """Return the public canonical representation of an instrument symbol."""
+
+    return _symbol(value)
+
+
 def _currency(value: object, field_name: str) -> str:
     if not isinstance(value, str):
         raise ValidationError(f"{field_name} must be a currency code")

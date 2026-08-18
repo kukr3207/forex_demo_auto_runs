@@ -16,6 +16,7 @@ from forex_monitor.models import (
     Quote,
     Signal,
     Timeframe,
+    normalize_symbol,
 )
 
 __all__ = [
@@ -31,6 +32,7 @@ __all__ = [
     "RuntimeConfig",
     "Signal",
     "Timeframe",
+    "normalize_symbol",
 ]
 
 __version__ = "1.0.0"
