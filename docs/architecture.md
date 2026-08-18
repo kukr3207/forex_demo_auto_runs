@@ -156,4 +156,3 @@ Good task-sized extensions include:
 
 Each extension can be evaluated through a public service, repository, CLI, or serialization boundary
 without requiring tests to inspect private implementation details.
-

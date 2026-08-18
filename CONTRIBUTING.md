@@ -108,4 +108,3 @@ Describe the user-visible outcome first. Include:
 
 Keep unrelated formatting and generated files out of the patch. Never commit credentials, databases,
 virtual environments, coverage output, or live market exports.
-

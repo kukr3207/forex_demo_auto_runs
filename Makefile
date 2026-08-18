@@ -49,4 +49,3 @@ check: lint typecheck test build
 clean:
 	rm -rf build dist .coverage .mypy_cache .pytest_cache .ruff_cache htmlcov
 	find src tests -type d -name __pycache__ -prune -exec rm -rf {} +
-
