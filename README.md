@@ -26,6 +26,13 @@ global state.
 - JSON, JSONL, CSV, and Markdown reports
 - An administrative command-line interface
 - Deterministic unit and integration tests that do not call external services
+- Deliverable forwards, swaps, NDFs, option Greeks, volatility surfaces, and portfolio valuation
+- Order lifecycle, smart routing, execution algorithms, fills, allocation, and reconciliation
+- Cash, funding, collateral, settlement, bilateral netting, and liquidity forecasting
+- Party screening, hierarchical limits, four-eyes approvals, surveillance, and transaction reports
+- Versioned research datasets, feature pipelines, experiment tracking, and purged validation
+- FIX 4.4 framing, dictionaries, stream decoding, session recovery, and resend storage
+- Incident response, leased retry queues, service-level objectives, and resumable runbooks
 
 ## Requirements
 
@@ -183,14 +190,21 @@ src/forex_monitor/
   alerts/          rule evaluation and notification delivery
   analytics/       aggregation, indicators, risk, and signals
   backtesting/     execution simulation and walk-forward evaluation
+  compliance/      screening, approvals, limits, surveillance, and reports
+  execution/       orders, algorithms, venues, routing, fills, and allocation
+  fix/             FIX dictionaries, framing, sessions, and message persistence
   ingestion/       provider-to-storage orchestration
   observability/   health, metrics, diagnostics, and audit events
   portfolio/       positions, valuation, allocation, and exposure
+  pricing/         curves, FX derivatives, volatility, and valuation books
   providers/       HTTP, fixture, and payload normalization
   quality/         consistency, continuity, and outlier checks
   risk/            sizing, limits, scenarios, and tail-risk measures
+  operations/      incidents, retry queues, SLOs, and operational runbooks
+  research/        versioned datasets, features, trials, and time-series validation
   storage/         migrations, transactions, and repositories
   strategies/      composable strategies, filters, and ensembles
+  treasury/        cash, funding, collateral, netting, and settlement
   application.py   production dependency composition
   cli.py           command-line parsing and dispatch
   config.py        validated settings
